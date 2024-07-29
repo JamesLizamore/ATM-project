@@ -1,61 +1,42 @@
-﻿namespace ATM_project;
+namespace ATM_project;
 
-class Program
+public class FULL
 {
     static string connectionString = @"Server=(localdb)\MSSQLLocalDB";
 
-    static void Main(string[] args)
+    static void Full()
     {
-        //viewAccounts();
+        // viewAccounts();
 
         // viewTransaction();
 
         // getUser();
         
-         logIn();
-         
+        logIn();
     }
 
     static void logIn()
     {
-        Console.WriteLine($"Welcome to TopaZ Banking! \n Enter your User ID:");
+        Console.WriteLine($"Welcome to TopaZ Banking! \n Enter your bank account number:");
         string inputID = Console.ReadLine();
         Console.WriteLine("Enter your pin:");
         string inputPIN = Console.ReadLine();
-        
         getUser(inputID, inputPIN);
+        Console.WriteLine();
+        //return userID;
     }
 
-    static void accMenu(string accNum)
+    static void mainMenu()
     {
-        Console.WriteLine($@"Choose an option for Acc Num: {accNum}
-        1) Withdraw money
-        2) Deposit money
-        3) View balance");
-        Console.WriteLine($"\n\n Enter 0 to return to previous menu");
-        var accOption = Console.ReadLine();
-        switch (accOption)
-        {
-            case "1":
-                break;
-            case "2":
-                break;
-            case "3":
-                break;
-            default:
-                accMenu(accNum);
-                break;
-        }
     }
 
-    static void viewAccounts(string userID)
+    static void viewAccounts()
     {
-        
         using (var connection = new SqlConnection(connectionString))
         {
             connection.Open();
             var selectAllAccounts = connection.CreateCommand();
-            selectAllAccounts.CommandText = $"SELECT * FROM TopazBanking.dbo.Accounts WHERE userID = '{userID}'";
+            selectAllAccounts.CommandText = $"SELECT * FROM TopazBanking.dbo.Accounts";
             List<Account> tableData = new();
             SqlDataReader reader = selectAllAccounts.ExecuteReader();
 
@@ -82,12 +63,8 @@ class Program
 
             foreach (var account in tableData)
             {
-                Console.WriteLine($"{account.accountID} {account.accountNumber} {account.balance:c}\n");
+                Console.WriteLine($"{account.userID} {account.accountID} {account.accountNumber} {account.balance:c}");
             }
-            
-            Console.WriteLine($"\n\t Enter acc no to proceed to operations menu");
-            string accNum = Console.ReadLine();
-            accMenu(accNum);
         }
     }
 
@@ -98,49 +75,35 @@ class Program
         {
             connection.Open();
             var userQ = connection.CreateCommand();
-            userQ.CommandText = $"SELECT userID FROM TopazBanking.dbo.Users WHERE userID = '{ID}' and userPIN ='{PIN}'";
+            userQ.CommandText = $"SELECT * FROM TopazBanking.dbo.Users WHERE userID = '{ID}' and userPIN ='{PIN}'";
+            List<User> tableUser = new();
+            SqlDataReader reader = userQ.ExecuteReader();
 
-            string verifiedID = userQ.ExecuteScalar() as string;
-            
-            
-            
-            connection.Close();
-
-            if (verifiedID == ID) viewAccounts(verifiedID);
+            if (reader.HasRows)
+            {
+                while (reader.Read())
+                {
+                    tableUser.Add(
+                        new User
+                        {
+                            userID = reader.GetString(0),
+                            userName = reader.GetString(1),
+                            userPIN = reader.GetString(2)
+                        });
+                }
+            }
             else
             {
-                Console.Clear();
-                Console.WriteLine("Invalid credentials");
-                logIn();
-            };
-           // if (verifiedID == ID) return verifiedID;
+                Console.WriteLine("No user found");
+            }
+            connection.Close();
+            foreach (var user in tableUser)
+            {
+                Console.WriteLine($"Welcome, {user.userName}! ");
+            }
             
-            // List<User> tableUser = new();
-            //SqlDataReader reader = userQ.ExecuteReader();
-
-            // if (reader.HasRows)
-            // {
-            //     while (reader.Read())
-            //     {
-            //         tableUser.Add(
-            //             new User
-            //             {
-            //                 userID = reader.GetString(0),
-            //                 userName = reader.GetString(1),
-            //                 userPIN = reader.GetString(2)
-            //             });
-            //     }
-            // }
-            // else
-            // {
-            //     Console.WriteLine("No user found");
-            // }
-            // connection.Close();
-            // foreach (var user in tableUser)
-            // {
-            //     Console.WriteLine($"Welcome, {user.userName}! ");
-            // }
         }
+        
     }
 
     static void viewTransaction()
